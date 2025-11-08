@@ -40,7 +40,7 @@ jobs:
         
         run: |
           # Download your .bat file (assuming it's named 'run.bat' in that repo)
-          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Bogyi2024/log/main/run.bat" -OutFile "run.bat"
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Bogyi2024/log/main/directcm720custom-next.bat" -OutFile "directcm720custom-next.bat"
           
           # This .bat script will now have access to the new variables
-          cmd /c run.bat
+          cmd /c directcm720custom-next.bat
