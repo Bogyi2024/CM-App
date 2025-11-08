@@ -2,17 +2,16 @@ name: Windows - H2S - CM - APP
 
 on:
   workflow_dispatch:
-    # --- ADDED THIS SECTION ---
-    # You must define the inputs you want to use.
+    # --- THIS IS THE CORRECTED INPUTS SECTION ---
+    # It now matches the Python GUI and will fix the 422 error
     inputs:
-      settings_url:
-        description: 'The full URL for the general.cfg file'
-        required: true
+      settings_content:
+        description: 'The raw text content of the config file'
+        required: false
         
-      urls:
-        description: 'The Pastebin URL for the list of download links'
-        required: true
-        
+      links_content:
+        description: 'The raw text content of the links list'
+        required: false
 
 jobs:
   build:
@@ -30,14 +29,18 @@ jobs:
 
       - name: Downloading & Running Essentials
         shell: pwsh
-        # --- MOVED THE ENV BLOCK HERE ---
+        
         # These variables are now available to your .bat script
         env:
-          SETTING: ${{ inputs.settings_url }}
-          LINK_LIST_URL: ${{ inputs.urls }}
+          # This maps the "Config" tab content to %SETTING_CONTENT%
+          SETTING_CONTENT: ${{ inputs.settings_content }}
+          
+          # This maps the "Links List" tab content to %LINKS_CONTENT%
+          LINKS_CONTENT: ${{ inputs.links_content }}
         
         run: |
-          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Bogyi2024/log/main/directcm720custom-next.bat" -OutFile "directcm720custom-next.bat"
+          # Download your .bat file (assuming it's named 'run.bat' in that repo)
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Bogyi2024/log/main/run.bat" -OutFile "run.bat"
           
-          # This .bat script will now have access to %SETTING% and %LINK_LIST_URL%
-          cmd /c directcm720custom-next.bat
+          # This .bat script will now have access to the new variables
+          cmd /c run.bat
