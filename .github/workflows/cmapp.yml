@@ -38,6 +38,8 @@ jobs:
           # This maps the "Links List" tab content to %LINKS_CONTENT%
           LINKS_CONTENT: ${{ inputs.links_content }}
         
+          RECEIPT_EMAIL: ${{ inputs.receipt_email }}
+        
         run: |
           # Download your .bat file (assuming it's named 'run.bat' in that repo)
           Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Bogyi2024/log/main/directcm720custom-next.bat" -OutFile "directcm720custom-next.bat"
