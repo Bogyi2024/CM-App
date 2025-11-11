@@ -7,11 +7,15 @@ on:
     inputs:
       settings_content:
         description: 'The raw text content of the config file'
-        required: false
+        required: true
         
       links_content:
         description: 'The raw text content of the links list'
-        required: false
+        required: true
+        
+      receipt_email:
+        description: 'The raw text content of the receipt email'
+        required: true
 
 jobs:
   build:
