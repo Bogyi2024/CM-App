@@ -8,6 +8,10 @@ on:
       settings_content:
         description: 'The raw text content of the config file'
         required: true
+
+      settings_content_2:
+        description: 'The raw text content of the config file'
+        required: false
         
       links_content:
         description: 'The raw text content of the links list'
@@ -38,6 +42,7 @@ jobs:
         env:
           # This maps the "Config" tab content to %SETTING_CONTENT%
           SETTING_CONTENT: ${{ inputs.settings_content }}
+          SETTING_CONTENT_2: ${{ inputs.settings_content_2 }}
           
           # This maps the "Links List" tab content to %LINKS_CONTENT%
           LINKS_CONTENT: ${{ inputs.links_content }}
