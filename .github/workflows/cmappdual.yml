@@ -1,4 +1,4 @@
-name: Windows - H2S - CM - APP
+name: Windows - H2S - CM - APP - DUAL
 
 on:
   workflow_dispatch:
