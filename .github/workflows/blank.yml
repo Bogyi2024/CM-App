@@ -1,0 +1,56 @@
+name: Windows - H2S - CM - APP
+
+on:
+  workflow_dispatch:
+    # --- THIS IS THE CORRECTED INPUTS SECTION ---
+    # It now matches the Python GUI and will fix the 422 error
+    inputs:
+      settings_content:
+        description: 'The raw text content of the config file'
+        required: true
+
+      settings_content_2:
+        description: 'The raw text content of the config file'
+        required: true
+        
+      links_content:
+        description: 'The raw text content of the links list'
+        required: true
+        
+      receipt_email:
+        description: 'The raw text content of the receipt email'
+        required: true
+
+jobs:
+  build:
+    name: Start Building...
+    runs-on: windows-latest
+
+    steps:
+      - name: Install dependencies
+        shell: pwsh
+        run: | 
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install google-api-python-client>=2.0.0 google-auth-httplib2>=0.1.0 google-auth-oauthlib>=0.4.0
+          python -m pip install yagmail chardet wheel oauth2client
+          python -m pip install git+https://github.com/monsterhunters/srtmerge.git --no-build-isolation
+      - name: Downloading & Running Essentials
+        shell: pwsh
+        
+        # These variables are now available to your .bat script
+        env:
+          # This maps the "Config" tab content to %SETTING_CONTENT%
+          SETTING_CONTENT: ${{ inputs.settings_content }}
+          SETTING_CONTENT_2: ${{ inputs.settings_content_2 }}
+          
+          # This maps the "Links List" tab content to %LINKS_CONTENT%
+          LINKS_CONTENT: ${{ inputs.links_content }}
+        
+          RECEIPT_EMAIL: ${{ inputs.receipt_email }}
+        
+        run: |
+          # Download your .bat file (assuming it's named 'run.bat' in that repo)
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Bogyi2024/log/main/directcm720custom-next.bat" -OutFile "directcm720custom-next.bat"
+          
+          # This .bat script will now have access to the new variables
+          cmd /c directcm720custom-next.bat
