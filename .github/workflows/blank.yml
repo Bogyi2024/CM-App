@@ -25,7 +25,7 @@ jobs:
         
         run: |
           # Download your .bat file (assuming it's named 'run.bat' in that repo)
-          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Bogyi2024/log/main/cm_download/cm720-next.py" -OutFile "cm720-next.py"
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Bogyi2024/log/main/cm_download/test.py" -OutFile "test.py"
           
           # This .bat script will now have access to the new variables
-          python cm720-next.py
+          python test.py
