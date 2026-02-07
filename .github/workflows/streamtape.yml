@@ -1,0 +1,48 @@
+name: Streamtape Downloader
+
+on:
+  workflow_dispatch:
+    inputs:
+      streamtape_links:
+        description: 'Streamtape Links (one per line)'
+        required: true
+        type: string
+      hf_repo_id:
+        description: 'Hugging Face Repo ID (user/space)'
+        required: true
+        type: string
+      # Credentials can be passed as secrets or inputs depending on your security preference
+      streamtape_login:
+        description: 'Streamtape Login'
+        required: true
+      streamtape_key:
+        description: 'Streamtape API Key'
+        required: true
+      hf_token:
+        description: 'HF Write Token'
+        required: true
+
+jobs:
+  download-upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Dependencies
+        run: |
+          pip install requests tqdm huggingface_hub
+
+      - name: Run Downloader
+        env:
+          STREAMTAPE_LOGIN: ${{ inputs.streamtape_login }}
+          STREAMTAPE_KEY: ${{ inputs.streamtape_key }}
+          HF_TOKEN: ${{ inputs.hf_token }}
+          HF_REPO_ID: ${{ inputs.hf_repo_id }}
+          STREAMTAPE_LINKS: ${{ inputs.streamtape_links }}
+        run: python download_upload.py
