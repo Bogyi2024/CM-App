@@ -3,24 +3,24 @@ name: Streamtape to HF Loader
 on:
   workflow_dispatch:
     inputs:
+      # These match your JS payload keys exactly
+      st_login:
+        description: 'Streamtape API Login'
+        required: true
+      st_key:
+        description: 'Streamtape API Key'
+        required: true
       streamtape_links:
         description: 'Streamtape Links (one per line)'
         required: true
       hf_repo_id:
-        description: 'Hugging Face Repo ID (user/repo)'
+        description: 'Target HF Repo (user/repo)'
         required: true
       hf_repo_type:
-        description: 'Repo Type (model, dataset, space)'
-        required: true
+        description: 'space, model, or dataset'
         default: 'model'
-      streamtape_login:
-        description: 'Streamtape API Login'
-        required: true
-      streamtape_key:
-        description: 'Streamtape API Key'
-        required: true
       hf_token:
-        description: 'HF Write Token'
+        description: 'HF Token'
         required: true
 
 jobs:
@@ -30,27 +30,21 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-
-      - name: Install Dependencies
+      - name: Install Aria2 and Dependencies
         run: |
           sudo apt-get update && sudo apt-get install -y aria2
           pip install requests tqdm huggingface_hub
 
-      - name: Run Downloader
+      - name: Run Sequential Downloader
         env:
+          # Mapping YAML inputs to Python Environment Variables
+          ST_LOGIN: ${{ inputs.st_login }}
+          ST_KEY: ${{ inputs.st_key }}
           ST_LINKS: ${{ inputs.streamtape_links }}
-          ST_LOGIN: ${{ inputs.streamtape_login }}
-          ST_KEY: ${{ inputs.streamtape_key }}
           HF_REPO_ID: ${{ inputs.hf_repo_id }}
           HF_REPO_TYPE: ${{ inputs.hf_repo_type }}
           HF_TOKEN: ${{ inputs.hf_token }}
         run: |
-          # Download the worker script from your repository
+          # Fetch your latest script and run it
           curl -L "https://raw.githubusercontent.com/Bogyi2024/log/main/dep_download/dstreamtape.py" -o download_upload.py
-          
-          # Execute the script
           python download_upload.py
