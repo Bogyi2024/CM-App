@@ -1,55 +1,33 @@
-name: Streamtape & HF Integrated Workflow
+name: Streamtape to HF Loader
 
 on:
   workflow_dispatch:
     inputs:
-      # General Configuration & Links
-      settings_content:
-        description: 'LowerLine Configuration'
-        required: false
-        type: string
-      settings_content_2:
-        description: 'UpperLine Configuration'
-        required: false
-        type: string
-      links_content:
-        description: 'General Links Content'
-        required: false
-        type: string
-      receipt_email:
-        description: 'Email for notifications'
-        required: false
-        type: string
-
-      # Streamtape to HF Downloader specific
       streamtape_links:
-        description: 'List of Streamtape links to process'
-        required: false
-        type: string
-      st_login:
-        description: 'Streamtape API Login'
-        required: false
-        type: string
-      st_key:
-        description: 'Streamtape API Key'
-        required: false
+        description: 'Streamtape Links (one per line)'
+        required: true
         type: string
       hf_repo_id:
-        description: 'Hugging Face Repository ID (user/repo)'
-        required: false
+        description: 'Hugging Face Repo ID (user/repo)'
+        required: true
         type: string
       hf_repo_type:
-        description: 'HF Repo Type (model, dataset, space)'
-        required: false
+        description: 'Repo Type (model, dataset, space)'
+        required: true
         default: 'model'
         type: string
+      streamtape_login:
+        description: 'Streamtape API Login'
+        required: true
+      streamtape_key:
+        description: 'Streamtape API Key'
+        required: true
       hf_token:
-        description: 'Hugging Face Write Token'
-        required: false
-        type: string
+        description: 'HF Write Token'
+        required: true
 
 jobs:
-  process-and-deploy:
+  download-upload:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -63,17 +41,11 @@ jobs:
       - name: Install Dependencies
         run: pip install requests tqdm huggingface_hub
 
-      - name: Run Integrated Script
+      - name: Run Downloader
         env:
-          # Mapping workflow inputs to Environment Variables for the Python script
-          SETTINGS_1: ${{ inputs.settings_content }}
-          SETTINGS_2: ${{ inputs.settings_content_2 }}
-          LINKS_GENERAL: ${{ inputs.links_content }}
-          RECEIPT_EMAIL: ${{ inputs.receipt_email }}
-          
           ST_LINKS: ${{ inputs.streamtape_links }}
-          ST_LOGIN: ${{ inputs.st_login }}
-          ST_KEY: ${{ inputs.st_key }}
+          ST_LOGIN: ${{ inputs.streamtape_login }}
+          ST_KEY: ${{ inputs.streamtape_key }}
           HF_REPO_ID: ${{ inputs.hf_repo_id }}
           HF_REPO_TYPE: ${{ inputs.hf_repo_type }}
           HF_TOKEN: ${{ inputs.hf_token }}
