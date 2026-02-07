@@ -6,16 +6,13 @@ on:
       streamtape_links:
         description: 'Streamtape Links (one per line)'
         required: true
-        type: string
       hf_repo_id:
         description: 'Hugging Face Repo ID (user/repo)'
         required: true
-        type: string
       hf_repo_type:
         description: 'Repo Type (model, dataset, space)'
         required: true
         default: 'model'
-        type: string
       streamtape_login:
         description: 'Streamtape API Login'
         required: true
@@ -39,7 +36,9 @@ jobs:
           python-version: '3.9'
 
       - name: Install Dependencies
-        run: pip install requests tqdm huggingface_hub
+        run: |
+          sudo apt-get update && sudo apt-get install -y aria2
+          pip install requests tqdm huggingface_hub
 
       - name: Run Downloader
         env:
