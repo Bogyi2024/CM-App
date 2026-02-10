@@ -46,5 +46,5 @@ jobs:
           HF_TOKEN: ${{ inputs.hf_token }}
         run: |
           # Fetch your latest script and run it
-          curl -L "https://raw.githubusercontent.com/Bogyi2024/log/main/dep_download/direct_upload.py" -o direct_upload.py
-          python direct_upload.py
+          curl -L "https://raw.githubusercontent.com/Bogyi2024/log/main/dep_download/dstreamtape.py" -o dstreamtape.py
+          python dstreamtape.py
