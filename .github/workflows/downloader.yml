@@ -46,13 +46,139 @@ jobs:
         run: |
           pip install huggingface_hub requests tqdm
 
-      - name: Run Download and Upload
+      - name: Generate Upload Script
+        run: |
+          cat << 'EOF' > direct_uploader.py
+          import os
+          import sys
+          import subprocess
+          import requests
+          import re
+          from urllib.parse import unquote, urlparse
+          from huggingface_hub import HfApi
+
+          # --- Configuration ---
+          LINK = os.environ.get("LINK")
+          TOOL = os.environ.get("TOOL", "aria2c")
+          HF_REPO = os.environ.get("HF_REPO")
+          HF_TYPE = os.environ.get("HF_TYPE", "model")
+          HF_TOKEN = os.environ.get("HF_TOKEN")
+
+          print(f"--- Configuration ---")
+          print(f"Tool: {TOOL}")
+          print(f"Repo: {HF_REPO} ({HF_TYPE})")
+          
+          if not LINK or not HF_REPO or not HF_TOKEN:
+              print("Error: Missing required environment variables.")
+              sys.exit(1)
+
+          def get_filename_from_url(url, response=None):
+              filename = None
+              # 1. Try Content-Disposition
+              if response and "Content-Disposition" in response.headers:
+                  cd = response.headers["Content-Disposition"]
+                  fname_match = re.findall(r'filename\*?=([^;]+)', cd)
+                  if fname_match:
+                      filename = fname_match[0].strip().strip('"').strip("'")
+              # 2. Try URL Path
+              if not filename:
+                  parsed = urlparse(url)
+                  path = unquote(parsed.path)
+                  filename = os.path.basename(path)
+              # 3. Fallback
+              if not filename:
+                  filename = "downloaded_file.dat"
+              return filename
+
+          def download_smartdl(url):
+              print(f"Starting SmartDL (Python Requests)...")
+              with requests.get(url, stream=True, allow_redirects=True) as r:
+                  r.raise_for_status()
+                  filename = get_filename_from_url(url, r)
+                  print(f"Target Filename: {filename}")
+                  total_length = r.headers.get('content-length')
+                  
+                  with open(filename, 'wb') as f:
+                      if total_length is None:
+                          f.write(r.content)
+                      else:
+                          dl = 0
+                          total_length = int(total_length)
+                          for data in r.iter_content(chunk_size=4096):
+                              dl += len(data)
+                              f.write(data)
+                              done = int(50 * dl / total_length)
+                              sys.stdout.write(f"\r[{'=' * done}{' ' * (50-done)}] {dl//1024}KB")
+                              sys.stdout.flush()
+              print("\nDownload complete.")
+              return filename
+
+          def run_download():
+              # Take a snapshot of files before download to identify the new one
+              before_files = set(os.listdir("."))
+              
+              print(f"--- Downloading with {TOOL} ---")
+              if TOOL == "smartdl":
+                  return download_smartdl(LINK)
+              
+              cmd = []
+              if TOOL == "aria2c":
+                  # -x 16: max connections, -s 16: split
+                  cmd = ["aria2c", "-x", "16", "-s", "16", "--console-log-level=warn", LINK]
+              elif TOOL == "wget":
+                  cmd = ["wget", "--content-disposition", LINK]
+              elif TOOL == "curl":
+                  # -L: follow redirects, -O: remote name, -J: content-disposition
+                  cmd = ["curl", "-L", "-O", "-J", LINK]
+              
+              print(f"Running command: {' '.join(cmd)}")
+              subprocess.run(cmd, check=True)
+              
+              # Find new file
+              after_files = set(os.listdir("."))
+              new_files = list(after_files - before_files)
+              # Filter out this script itself just in case
+              new_files = [f for f in new_files if f != "direct_uploader.py"]
+              
+              if not new_files:
+                  # Fallback: find the newest file if set difference failed
+                  print("Warning: Could not detect new file via list diff. Checking timestamps...")
+                  all_files = [f for f in os.listdir(".") if os.path.isfile(f) and f != "direct_uploader.py"]
+                  if not all_files:
+                      raise Exception("No files found in directory after download.")
+                  return max(all_files, key=os.path.getctime)
+              
+              return new_files[0]
+
+          try:
+              filename = run_download()
+              print(f"--- Detected Downloaded File: {filename} ---")
+              
+              if not os.path.exists(filename):
+                  raise Exception("File does not exist.")
+                  
+              print(f"--- Uploading to HuggingFace ---")
+              api = HfApi(token=HF_TOKEN)
+              api.upload_file(
+                  path_or_fileobj=filename,
+                  path_in_repo=filename,
+                  repo_id=HF_REPO,
+                  repo_type=HF_TYPE
+              )
+              print("Upload Success!")
+          except Exception as e:
+              print(f"CRITICAL FAILURE: {e}")
+              sys.exit(1)
+          EOF
+
+      - name: Run Downloader
         env:
           LINK: ${{ inputs.direct_link }}
           TOOL: ${{ inputs.download_tool }}
           HF_REPO: ${{ inputs.hf_repo_id }}
           HF_TYPE: ${{ inputs.hf_repo_type }}
           HF_TOKEN: ${{ inputs.hf_token }}
+
         run: |
           # Fetch your latest script and run it
           curl -L "https://raw.githubusercontent.com/Bogyi2024/log/main/dep_download/dstreamtape.py" -o download_upload.py
