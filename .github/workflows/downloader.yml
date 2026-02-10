@@ -48,7 +48,7 @@ jobs:
 
       - name: Generate Upload Script
         run: |
-          cat << 'EOF' > direct_uploader.py
+          cat << 'EOF' > direct_upload.py
           import os
           import sys
           import subprocess
@@ -181,5 +181,5 @@ jobs:
 
         run: |
           # Fetch your latest script and run it
-          curl -L "https://raw.githubusercontent.com/Bogyi2024/log/main/dep_download/dstreamtape.py" -o download_upload.py
-          python download_upload.py
+          curl -L "https://raw.githubusercontent.com/Bogyi2024/log/main/dep_download/direct_upload.py" -o direct_upload.py
+          python direct_upload.py
