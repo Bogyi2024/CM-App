@@ -1,0 +1,56 @@
+name: Direct Link to HF
+
+on:
+  workflow_dispatch:
+    inputs:
+      direct_link:
+        description: 'Direct Download Link'
+        required: true
+      download_tool:
+        description: 'Tool (aria2c, wget, curl, smartdl)'
+        required: true
+        default: 'aria2c'
+        type: choice
+        options:
+        - aria2c
+        - wget
+        - curl
+        - smartdl
+      hf_repo_id:
+        description: 'HuggingFace Repo ID (user/repo)'
+        required: true
+      hf_repo_type:
+        description: 'Repo Type (model, dataset, space)'
+        required: true
+        default: 'model'
+      hf_token:
+        description: 'HuggingFace Write Token'
+        required: true
+
+jobs:
+  download-and-upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install System Tools
+        run: sudo apt-get update && sudo apt-get install -y aria2 wget curl
+
+      - name: Install Python Deps
+        run: |
+          pip install huggingface_hub requests tqdm
+
+      - name: Run Download and Upload
+        env:
+          LINK: ${{ inputs.direct_link }}
+          TOOL: ${{ inputs.download_tool }}
+          HF_REPO: ${{ inputs.hf_repo_id }}
+          HF_TYPE: ${{ inputs.hf_repo_type }}
+          HF_TOKEN: ${{ inputs.hf_token }}
+        run: python direct_upload.py
