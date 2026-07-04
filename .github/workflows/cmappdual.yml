@@ -39,6 +39,8 @@ jobs:
         
         # These variables are now available to your .bat script
         env:
+          PYTHONIOENCODING: "utf-8"
+          PYTHONUTF8: "1"
           # This maps the "Config" tab content to %SETTING_CONTENT%
           SETTING_CONTENT: ${{ inputs.settings_content }}
           SETTING_CONTENT_2: ${{ inputs.settings_content_2 }}
