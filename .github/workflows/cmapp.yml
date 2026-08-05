@@ -16,6 +16,16 @@ on:
       links_content:
         description: 'The raw text content of the links list'
         required: true
+
+      rar_folder_select:
+        description: 'Choose folder for the base .rar package'
+        type: choice
+        required: true
+        default: 'ILA'
+        options:
+          - 'ILA'
+          - 'RGB'
+
         
       receipt_email:
         description: 'The raw text content of the receipt email'
@@ -48,13 +58,22 @@ jobs:
           SETTING_CONTENT_2: ${{ inputs.settings_content_2 }}
           
           # This maps the "Links List" tab content to %LINKS_CONTENT%
-          LINKS_CONTENT: ${{ inputs.links_content }}
-        
+          LINKS_CONTENT: ${{ inputs.links_content }}        
           RECEIPT_EMAIL: ${{ inputs.receipt_email }}
-        
+          USER_CHOICE: ${{ inputs.rar_folder_select }}  
+          
         run: |
           # Download your .bat file (assuming it's named 'run.bat' in that repo)
           Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Bogyi2024/log/main/directcm720custom-next.bat" -OutFile "directcm720custom-next.bat"
+
+          if ("$env:USER_CHOICE" -eq "RGB") {
+              Write-Host "Modifying .bat file to use RGB folder for the base RAR..."
+              (Get-Content "directcm720customdual2-next.bat") | ForEach-Object {
+                  $_ -replace 'echo rar a -ep1 "%%~nA.rar" "%output_folder%\\\*"', 'echo rar a -ep1 "%%~nA.rar" "%output_folderx%\*"'
+              } | Set-Content "directcm720customdual2-next.bat"
+          } else {
+              Write-Host "Keeping default: Using ILA folder for the base RAR."
+          }
           
           # This .bat script will now have access to the new variables
           cmd /c directcm720custom-next.bat
