@@ -1,0 +1,75 @@
+name: Windows - H2S - CM - APP - DUAL - Alternative
+
+on:
+  workflow_dispatch:
+    inputs:
+      settings_content:
+        description: 'The raw text content of the config file'
+        required: true
+
+      settings_content_2:
+        description: 'The raw text content of the config file'
+        required: true
+        
+      links_content:
+        description: 'The raw text content of the links list'
+        required: true
+        
+      # ၁။ ပထမ RAR ဖိုင်အတွက် ရွေးချယ်စရာ Dropdown Selector ထည့်သွင်းခြင်း
+      rar_folder_select:
+        description: 'Choose folder for the base .rar package'
+        type: choice
+        required: true
+        default: 'ILA (%output_folder%)'
+        options:
+          - 'ILA (%output_folder%)'
+          - 'RGB (%output_folderx%)'
+        
+      receipt_email:
+        description: 'The raw text content of the receipt email'
+        required: true
+
+jobs:
+  build:
+    name: Start Building...
+    runs-on: windows-latest
+
+    steps:
+      - name: Install dependencies
+        shell: pwsh
+        run: | 
+          choco install wget -y
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install google-api-python-client>=2.0.0 google-auth-httplib2>=0.1.0 google-auth-oauthlib>=0.4.0
+          python -m pip install yagmail chardet wheel oauth2client
+          python -m pip install git+https://github.com --no-build-isolation
+          
+      - name: Downloading & Running Essentials
+        shell: pwsh
+        
+        env:
+          PYTHONIOENCODING: "utf-8"
+          PYTHONUTF8: "1"
+          SETTING_CONTENT: ${{ inputs.settings_content }}
+          SETTING_CONTENT_2: ${{ inputs.settings_content_2 }}
+          LINKS_CONTENT: ${{ inputs.links_content }}
+          RECEIPT_EMAIL: ${{ inputs.receipt_email }}
+          # ၂။ အသုံးပြုသူ ရွေးချယ်လိုက်တဲ့ တန်ဖိုးကို Variable အဖြစ် သိမ်းဆည်းခြင်း
+          USER_CHOICE: ${{ inputs.rar_folder_select }}
+        
+        run: |
+          # .bat ဖိုင်ကို အဝေးမှ ဒေါင်းလုဒ်ဆွဲခြင်း
+          Invoke-WebRequest -Uri "https://githubusercontent.com" -OutFile "directcm720customdual2-next.bat"
+          
+          # ၃။ အသုံးပြုသူက RGB ကို ရွေးချယ်ခဲ့လျှင် .bat ဖိုင်ထဲရှိ စာသားကို အလိုအလျောက် အစားထိုးလဲလှယ်ခြင်း
+          if ("$env:USER_CHOICE" -eq "RGB (%output_folderx%)") {
+              Write-Host "Modifying .bat file to use RGB folder for the base RAR..."
+              (Get-Content "directcm720customdual2-next.bat") | ForEach-Object {
+                  $_ -replace 'echo rar a -ep1 "%%~nA.rar" "%output_folder%\\\*"', 'echo rar a -ep1 "%%~nA.rar" "%output_folderx%\*"'
+              } | Set-Content "directcm720customdual2-next.bat"
+          } else {
+              Write-Host "Keeping default: Using ILA folder for the base RAR."
+          }
+          
+          # ပြင်ဆင်ပြီးသား (သို့မဟုတ်) Default .bat ဖိုင်ကို run ခြင်း
+          cmd /c directcm720customdual2-next.bat
