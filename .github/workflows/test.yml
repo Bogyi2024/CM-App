@@ -20,10 +20,10 @@ on:
         description: 'Choose folder for the base .rar package'
         type: choice
         required: true
-        default: 'ILA (%output_folder%)'
+        default: 'ILA'
         options:
-          - 'ILA (%output_folder%)'
-          - 'RGB (%output_folderx%)'
+          - 'ILA'
+          - 'RGB'
         
       receipt_email:
         description: 'The raw text content of the receipt email'
