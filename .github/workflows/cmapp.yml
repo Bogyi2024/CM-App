@@ -1,79 +1,103 @@
-name: Windows - H2S - CM - APP
+@echo off
+rem Installing
+pip install gdown
+pip install huggingface_hub
+pip install --upgrade --no-cache-dir gdown
+pip install git+https://github.com/Juvenal-Yescas/mediafire-dl
+gdown 1q421vbzHgXv7cG7quC6YVQi4iW1ASvOY
+curl -o winrar.exe https://raw.githubusercontent.com/Bogyi2024/log/main/winrar-x64-701.exe
+winrar.exe -s
+curl -o unrar.exe https://raw.githubusercontent.com/Bogyi2024/log/main/UnRAR.exe
+unrar.exe x Hard2SoftsubV1_5_2.rar
 
-on:
-  workflow_dispatch:
-    # --- THIS IS THE CORRECTED INPUTS SECTION ---
-    # It now matches the Python GUI and will fix the 422 error
-    inputs:
-      settings_content:
-        description: 'The raw text content of the config file'
-        required: true
+cd /d "Hard2SoftsubV1_5_2" || (
+    echo ERROR: Hard2SoftsubV1_5_2 folder was not found.
+    exit /b 1
+)
 
-      settings_content_2:
-        description: 'The raw text content of the config file'
-        required: false
-        
-      links_content:
-        description: 'The raw text content of the links list'
-        required: true
+curl -o send_email_file-next.py https://raw.githubusercontent.com/Bogyi2024/log/main/send_email_file-next.py
+curl -o aria2c.exe https://raw.githubusercontent.com/Bogyi2024/log/main/aria2c.exe
 
-      rar_folder_select:
-        description: 'Choose folder for the base .rar package'
-        type: choice
-        required: true
-        default: 'ILA'
-        options:
-          - 'ILA'
-          - 'RGB'
+rem Download and run the download/configuration scripts.
+curl -o cm720-next.py https://raw.githubusercontent.com/Bogyi2024/log/main/cm_download/cm720-next.py
+python cm720-next.py
+curl -o config.py https://raw.githubusercontent.com/Bogyi2024/log/main/config.py
+python config.py
 
-        
-      receipt_email:
-        description: 'The raw text content of the receipt email'
-        required: true
+rem Enter core temporarily for setup, then return to the application folder.
+pushd "core" || (
+    echo ERROR: core folder was not found.
+    exit /b 1
+)
 
-jobs:
-  build:
-    name: Start Building...
-    runs-on: windows-latest
+pip install -r requirements.txt
+curl -O -L https://raw.githubusercontent.com/monsterhunters/sub/dev/sa.zip
+tar -xf sa.zip
+curl -O -L https://raw.githubusercontent.com/monsterhunters/sub/monsterhunters-patch-1/main.py
+curl -O -L https://raw.githubusercontent.com/monsterhunters/sub/monsterhunters-patch-1/main2x.py
 
-    steps:
-      - name: Install dependencies
-        shell: pwsh
-        run: | 
-          choco install wget -y
-          python -m pip install --upgrade pip setuptools wheel
-          python -m pip install google-api-python-client>=2.0.0 google-auth-httplib2>=0.1.0 google-auth-oauthlib>=0.4.0
-          python -m pip install yagmail chardet wheel oauth2client
-          python -m pip install git+https://github.com/monsterhunters/srtmerge.git --no-build-isolation
+popd
 
-      - name: Downloading & Running Essentials
-        shell: pwsh
-        
-        # These variables are now available to your .bat script
-        env:
-          PYTHONIOENCODING: "utf-8"
-          PYTHONUTF8: "1"
-          # This maps the "Config" tab content to %SETTING_CONTENT%
-          SETTING_CONTENT: ${{ inputs.settings_content }}
-          SETTING_CONTENT_2: ${{ inputs.settings_content_2 }}
-          
-          # This maps the "Links List" tab content to %LINKS_CONTENT%
-          LINKS_CONTENT: ${{ inputs.links_content }}        
-          RECEIPT_EMAIL: ${{ inputs.receipt_email }}
-          USER_CHOICE: ${{ inputs.rar_folder_select }}  
-          
-        run: |
-          # Download your .bat file (assuming it's named 'run.bat' in that repo)
-          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Bogyi2024/log/main/directcm720custom-next.bat" -OutFile "directcm720custom-next.bat"
+del /q "*.srt" 2>nul
 
-          if ("$env:USER_CHOICE" -eq "RGB") {
-              Write-Host "Modifying .bat file to use RGB folder for the base RAR..."
-              (Get-Content "directcm720customdual2-next.bat") | ForEach-Object {
-                  $_ -replace 'echo rar a -ep1 "%%~nA.rar" "%output_folder%\\\*"', 'echo rar a -ep1 "%%~nA.rar" "%output_folderx%\*"'
-              } | Set-Content "directcm720customdual2-next.bat"
-          } else {
-              Write-Host "Keeping default: Using ILA folder for the base RAR."
-          }
-          
-          # This .bat script will now have access to the new variables
-          cmd /c directcm720custom-next.bat
+setlocal
+pushd "core" || (
+    echo ERROR: core folder was not found.
+    endlocal
+    exit /b 1
+)
+
+rem Delete old files.
+del /q "*.json" 2>nul
+del /q "*.srt" 2>nul
+
+rem Remove old directories.
+for %%D in (up upx upxx upxxx down downx downxx downxxx texts textss raw_texts raw_textss) do (
+    if exist "%%D" rmdir /s /q "%%D"
+)
+
+set "folder_path=..\source"
+set "output_folder=ILAImages"
+set "output_folderx=RGBImages"
+set "output_file=commands.txt"
+
+if not exist "%folder_path%" (
+    echo ERROR: Source folder "%folder_path%" was not found.
+    popd
+    endlocal
+    exit /b 1
+)
+
+rem Build the same command list, but use a normalized absolute input path.
+> "%output_file%" (
+    for %%E in (mp4 mkv m4v) do (
+        for %%A in ("%folder_path%\*.%%E") do (
+            if exist "%%~fA" (
+                echo VideoSubFinderWXW.exe -c -r -nthr 1 -i "%%~fA"
+                echo rar a -ep1 "%%~nA.rar" "%output_folder%\*"
+                echo rar a -ep1 "..\%%~nA_ILA.rar" "%output_folder%\*"
+                echo rar a -ep1 "..\%%~nA_RGB.rar" "%output_folderx%\*"
+            )
+        )
+    )
+)
+
+set "commands_file=commands.txt"
+
+for /f "usebackq delims=" %%A in ("%commands_file%") do (
+    echo Executing: %%A
+    call %%A
+    if errorlevel 1 echo WARNING: Command returned an error: %%A
+)
+
+move /y "*.rar" "..\source\" >nul 2>&1
+echo Finished executing commands from %commands_file%.
+
+rem Run the existing Python processing chain.
+python sa.py && python unrarx.py && python getsizex.py && python cropx.py && python mainx.py && python merge.py && python getlist.py && python batchx.py
+
+popd
+endlocal
+
+rem This script is stored in Hard2SoftsubV1_5_2, not in core.
+python send_email_file-next.py
